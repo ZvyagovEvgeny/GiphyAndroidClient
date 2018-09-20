@@ -1,4 +1,4 @@
-# GiphyAndroidApp
+# GiphyAndroidClient
 This application provides functionality for the GIFs from the site https://giphy.com/.
 To run the application, install the APK file on your device with Android 5.1 (API level 22) and higher.
 
