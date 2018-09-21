@@ -3,13 +3,20 @@ package com.universetelecom.mvvm_users.view.scrollListener;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-public abstract class PaginationScrollListener extends RecyclerView.OnScrollListener  {
+public class PaginationScrollListener extends RecyclerView.OnScrollListener  {
 
     LinearLayoutManager layoutManager;
 
-    public PaginationScrollListener(LinearLayoutManager layoutManager) {
-        this.layoutManager = layoutManager;
+    public interface LoadMoreItems{
+        void loadMoreItems();
     }
+    private LoadMoreItems loadMoreItemsCallback;
+
+    public PaginationScrollListener(LinearLayoutManager layoutManager, LoadMoreItems loadMoreItems) {
+        this.layoutManager = layoutManager;
+        this.loadMoreItemsCallback = loadMoreItems;
+    }
+
 
     @Override
     public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -19,20 +26,9 @@ public abstract class PaginationScrollListener extends RecyclerView.OnScrollList
         int totalItemCount = layoutManager.getItemCount();
         int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
 
-        boolean loading = isLoading();
-        boolean isLast = isLastPage();
-
-        if (!loading && !isLast) {
-            if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
-                    && firstVisibleItemPosition >= 0) {
-                loadMoreItems();
-            }
+        if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                && firstVisibleItemPosition >= 0) {
+            loadMoreItemsCallback.loadMoreItems();
         }
     }
-
-    protected abstract void loadMoreItems();
-
-    public abstract boolean isLastPage();
-
-    public abstract boolean isLoading();
 }
