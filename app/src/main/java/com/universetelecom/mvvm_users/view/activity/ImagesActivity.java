@@ -3,6 +3,7 @@ package com.universetelecom.mvvm_users.view.activity;
 import android.content.Context;
 import android.databinding.BaseObservable;
 import android.databinding.DataBindingUtil;
+import android.databinding.Observable;
 import android.support.annotation.NonNull;
 
 import android.os.Bundle;
@@ -27,7 +28,8 @@ import com.universetelecom.mvvm_users.viewModel.ImagesViewModel;
 import com.universetelecom.mvvm_users.viewModel.base.ViewModelFactory;
 
 
-public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,ActivityView> implements ActivityView {
+public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,
+        ActivityView> implements ActivityView {
     private ActivityImagesListBinding activityImagesListBinding;
     private ImagesViewModel imagesViewModel;
 
@@ -39,7 +41,8 @@ public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,Activi
     }
 
     private void initDataBinding() {
-        activityImagesListBinding = DataBindingUtil.setContentView(this, R.layout.activity_images_list);
+        activityImagesListBinding = DataBindingUtil.setContentView(this,
+                R.layout.activity_images_list);
         activityImagesListBinding.setImagesViewModel(imagesViewModel);
     }
 
@@ -50,29 +53,12 @@ public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,Activi
             imageAdapter.updateData(imagesViewModel.getImagesList());
             listImages.setAdapter(imageAdapter);
 
-            LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+            LinearLayoutManager layoutManager = new LinearLayoutManager(this,
+                    LinearLayoutManager.VERTICAL, false);
             listImages.setLayoutManager(layoutManager);
-            listImages.addOnScrollListener(new PaginationScrollListener(layoutManager) {
+            listImages.addOnScrollListener(new PaginationScrollListener(layoutManager,
+                    ()->imagesViewModel.loadNextPage()));
 
-                @Override
-                protected void loadMoreItems() {
-                imagesViewModel.loadNextPage();
-            }
-
-                @Override
-                public boolean isLastPage() {
-                    boolean isLastPage = imagesViewModel.isLastPage();
-                    if(isLastPage){
-                        imageAdapter.setLoading(false);
-                    }
-                    return isLastPage;
-                }
-
-                @Override
-                public boolean isLoading() {
-                    return imagesViewModel.allPagesDownloaded.get();
-                }
-        });
     }
 
     @NonNull
@@ -103,26 +89,21 @@ public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,Activi
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.menu_icon);
 
-        navigationView.setNavigationItemSelectedListener(
-                new NavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        // set item as selected to persist highlight
-                        menuItem.setChecked(true);
-
-                        // close drawer when item is tapped
-                        mDrawerLayout.closeDrawers();
-                        switch (menuItem.getItemId()){
-                            case R.id.nav_trends:
-                                presenter.showTrending();
-                                break;
-                        }
-
-                        return true;
-                    }
-                });
+        navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
     }
 
+    private boolean onNavigationItemSelected(MenuItem menuItem){
+        // set item as selected to persist highlight
+        menuItem.setChecked(true);
+        // close drawer when item is tapped
+        mDrawerLayout.closeDrawers();
+        switch (menuItem.getItemId()){
+            case R.id.nav_trends:
+                imagesViewModel.showTrending();
+                break;
+        }
+        return true;
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -131,7 +112,8 @@ public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,Activi
         MenuItem item = menu.findItem(R.id.action_search);
         activityImagesListBinding.searchView.setMenuItem(item);
 
-        activityImagesListBinding.searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+        activityImagesListBinding.searchView.setOnQueryTextListener(
+                new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 imagesViewModel.searchGIFs(query);
@@ -160,5 +142,6 @@ public class ImagesActivity extends BasePresenterActivity<ImagesViewModel,Activi
         }
         return super.onOptionsItemSelected(item);
     }
+
 
 }

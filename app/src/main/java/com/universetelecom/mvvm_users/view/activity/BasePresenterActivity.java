@@ -32,8 +32,6 @@ public abstract class BasePresenterActivity<P extends ViewModel<V>,V> extends Ap
         super.onCreate(savedInstanceState);
 
         Loader<P> loader = LoaderManager.getInstance(this).getLoader(loaderId());
-
-        //Loader<P> loader = getSupportLoaderManager().getLoader(loaderId());
         if (loader == null) {
             initLoader();
         } else {
@@ -70,8 +68,6 @@ public abstract class BasePresenterActivity<P extends ViewModel<V>,V> extends Ap
         }
     };
 
-
-    boolean presenterNotifyed = false;
     @Override
     protected void onStart() {
         super.onStart();
@@ -106,9 +102,4 @@ public abstract class BasePresenterActivity<P extends ViewModel<V>,V> extends Ap
      * Can be use to initialize the Presenter or simple hold a reference to it.
      */
     protected abstract void onPresenterCreatedOrRestored(@NonNull P presenter);
-
-    /**
-     * Override in case of fragment not implementing Presenter<View> interface
-     */
-
 }

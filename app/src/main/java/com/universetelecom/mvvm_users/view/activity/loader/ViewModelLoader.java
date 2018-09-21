@@ -21,8 +21,6 @@ public class ViewModelLoader<T extends ViewModel> extends Loader<T> {
         this.tag = tag;
     }
 
-
-    //При старте активити
     @Override
     protected void onStartLoading() {
         Log.i(LOG_TAG, "onStartLoading-" + tag);
@@ -37,7 +35,6 @@ public class ViewModelLoader<T extends ViewModel> extends Loader<T> {
         forceLoad();
     }
 
-    //Работа лоадера, вызывается при forceLoad()
     @Override
     protected void onForceLoad() {
         Log.i(LOG_TAG, "onForceLoad-" + tag);
@@ -55,7 +52,6 @@ public class ViewModelLoader<T extends ViewModel> extends Loader<T> {
         Log.i(LOG_TAG, "deliverResult-" + tag);
     }
 
-    //При остановке активити
     @Override
     protected void onStopLoading() {
         Log.i(LOG_TAG, "onStopLoading-" + tag);

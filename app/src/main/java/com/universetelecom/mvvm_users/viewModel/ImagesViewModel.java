@@ -37,25 +37,29 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
     public ObservableBoolean initialProgressBarVisibility;
     public ObservableField<String> messageLabel;
     public ObservableField<String> toolbarMessage;
-    public ObservableBoolean allPagesDownloaded = new ObservableBoolean(false);
-
+    public ObservableBoolean allPagesDownloaded;
+    public ObservableBoolean requestInProcess;
 
     private Context context;
     private List<Datum> data = new ArrayList<>();
-    private ImagesResponse lastImagesResponce;
+    private ImagesResponse lastImagesResponse;
     private String currentSearchQuery;
     private RequestType currentRequestType = RequestType.TRENDING;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private int currentPageNumber = 0;
-    private boolean requestInProcess = false;
+
 
     private enum RequestType {
         TRENDING, USER_SEARCH
     }
 
-    private void dataLoadingCancel(){
+    private void cancelDataLoading(){
         compositeDisposable.dispose();
         compositeDisposable = new CompositeDisposable();
+    }
+
+    private void requestComplete() {
+        requestInProcess.set(false);
     }
 
     public ImagesViewModel(@NonNull Context context) {
@@ -69,11 +73,30 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
         messageLabelVisibility = new ObservableBoolean(false);
         messageLabel = new ObservableField<>("");
         toolbarMessage = new ObservableField<>(TRENDING_STR);
+        allPagesDownloaded = new ObservableBoolean(false);
+        requestInProcess = new ObservableBoolean(false);
+    }
+
+    private boolean serverHaveMoreItems(){
+        if(lastImagesResponse == null)return true;
+        boolean allDataDownloaded = lastImagesResponse.getPagination().getTotalCount() <= data.size();
+        if (allDataDownloaded){
+            return false;
+        }
+        return true;
     }
 
     public void loadNextPage(){
 
-        if(requestInProcess)return;
+        if(!serverHaveMoreItems()){
+            allPagesDownloaded.set(true);
+            return;
+        }
+        else {
+            allPagesDownloaded.set(false);
+        }
+
+        if(requestInProcess.get())return;
 
         switch (currentRequestType){
             case TRENDING:
@@ -84,9 +107,10 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
                 loadNexPageOfSearch(currentPageNumber,currentSearchQuery);
                 break;
         }
-        requestInProcess = true;
+        requestInProcess.set(true);
         currentPageNumber++;
     }
+
 
     private void loadNexPageOfSearch(int page, String search){
         AppController appController = AppController.create(context);
@@ -118,9 +142,11 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
 
     private void onImagesDownloaded(ImagesResponse imagesResponse){
         Timber.d("onImagesDownloaded");
+
+        requestComplete();
+
         data.addAll(imagesResponse.getData());
-        lastImagesResponce = imagesResponse;
-        requestInProcess = false;
+        lastImagesResponse = imagesResponse;
         if(data.size()==0){
             showMessage(NO_RESULT);
             return;
@@ -131,7 +157,7 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
 
     private void onImagesDownloadError(Throwable throwable){
         showMessage(INTERNET_ERROR_MESSAGE);
-        requestInProcess = false;
+        requestComplete();
         Timber.d(throwable.getMessage());
     }
 
@@ -145,28 +171,16 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
     }
 
     private void resetParams(){
-        dataLoadingCancel();
+        cancelDataLoading();
         currentPageNumber = 0;
         data.clear();
         allPagesDownloaded.set(false);
-        lastImagesResponce = null;
+        lastImagesResponse = null;
         imagesListChanged();
     }
 
     private void setCurrentRequestType(RequestType requestType){
         currentRequestType = requestType;
-    }
-
-    public boolean isLastPage(){
-        if(getTotalImagesCount()<=data.size())
-            return true;
-
-        return false;
-    }
-
-    private int getTotalImagesCount(){
-        if(lastImagesResponce==null)return 0;
-        return lastImagesResponce.getPagination().getTotalCount();
     }
 
     private void resetVisibilityOfUI(){
@@ -196,7 +210,7 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
     }
 
     public void searchGIFs(String search){
-        dataLoadingCancel();
+        cancelDataLoading();
         resetParams();
         currentSearchQuery = search;
         setCurrentRequestType(RequestType.USER_SEARCH);
@@ -205,7 +219,7 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
     }
 
     public void showTrending(){
-        dataLoadingCancel();
+        cancelDataLoading();
         resetParams();
         resetVisibilityOfUI();
 
@@ -225,14 +239,10 @@ public class ImagesViewModel extends BaseObservable implements ViewModel<Activit
     }
 
     @Override
-    public void onViewDetached() {
-
-
-    }
-
-    @Override
     public void onDestroyed() {
+        Timber.d("onDestroyed");
         context = null;
-
+        compositeDisposable.dispose();
+        compositeDisposable = new CompositeDisposable();
     }
 }

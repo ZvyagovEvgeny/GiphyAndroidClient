@@ -25,11 +25,12 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private List<Datum> imagesList;
 
-    private final int LOADING = 1;
+    private final int PROGRESS_BAR = 1;
     private final int ITEM = 2;
 
     public void setLoading(boolean loading) {
         isLoading = loading;
+        notifyDataSetChanged();
     }
     private boolean isLoading = true;
     public ImageAdapter() {
@@ -68,9 +69,11 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     @Override
     public int getItemCount() {
-        if(imagesList.size()==0 || !isLoading) return imagesList.size();
-        return imagesList.size() + 1; // to show progress bar
+        //The last row is progress bar
+        if(isLoading) return imagesList.size() + 1;
+        return imagesList.size();
     }
+
     public void updateData(@Nullable List<Datum> data) {
         this.imagesList = data;
         notifyDataSetChanged();
@@ -78,10 +81,9 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     @Override
     public int getItemViewType(int position) {
-        if(position==imagesList.size())
-            return LOADING;
-        else
-            return ITEM;
+        //To show progress bar
+        if(isLoading && position == imagesList.size())return PROGRESS_BAR;
+        return ITEM;
     }
 
     public static class ImageAdapterViewHolder extends RecyclerView.ViewHolder {

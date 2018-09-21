@@ -4,8 +4,6 @@ public interface ViewModel<V> {
 
     void onViewAttached(V view);
 
-    void onViewDetached();
-
     void onDestroyed();
 
 }
